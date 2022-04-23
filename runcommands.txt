@@ -1,0 +1,4 @@
+nano machinefile
+mpiexec -n 8 -f machinefile ./2
+mpiexec -n 8 -f machinefile ./3
+mpiexec -n 3 -f machinefile ./9
