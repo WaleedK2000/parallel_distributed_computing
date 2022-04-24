@@ -1,53 +1,77 @@
-
 #include <mpi.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
-main(int argc, char *argv[])
+// Gather
+// Scatter
+// Broadcast
+
+int main(int argc, char *argv[])
 {
-    int rank, size;
-    MPI_Status status;
-    MPI_Request request;
-    int done, myfound, inrange, nvalues;
-    int b[400];
-    int i, j, dummy;
-    FILE *infile;
+
+    int i, rank, nproc, irecv;
+    int buffer;
+    int scatter_buffer[250];
+    int scatter_rcv;
     MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    myfound = 0;
+
+    int toSearch;
+
+    int gather_send;
+    int *gather_recv_root;
+
+    bool found = false;
+    int mpi_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     if (rank == 0)
     {
-        infile = fopen("data", "r");
-        for (i = 0; i < 400; ++i)
+        // boradcast value
+        buffer = 258963;
+
+        toSearch = 240;
+
+        for (int i = 0; i < 250; ++i)
         {
-            fscanf(infile, "%d", &b[i]);
+            scatter_buffer[i] = i;
+        }
+
+        gather_recv_root = malloc(nproc * sizeof(int));
+        // reduce_recv_root = malloc (nproc  * sizeof(int));
+    }
+    else
+    {
+        gather_send = rank * 100;
+    }
+    // MPI Scatter scatters scatter_buffer to its respective slave node
+    MPI_Scatter(scatter_buffer, 1, MPI_INT, &scatter_rcv, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&toSearch, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    int i = 0;
+    for (int i = 0; i < 250 / mpi_size; i++)
+    {
+        if (scatter_rcv == toSearch)
+        {
+            found = true;
+            break;
         }
     }
-    MPI_Bcast(b, 400, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Irecv(&dummy, 1, MPI_INT, MPI_ANY_SOURCE, 86, MPI_COMM_WORLD, &request);
-    MPI_Test(&request, &done, &status);
-    nvalues = 400 / size;
-    i = rank * nvalues;
-    inrange = (i <= ((rank + 1) * nvalues - 1) && i >= rank * nvalues);
-    while (!done && inrange)
+
+    // MPI Gather takes result from all slave nodes and sends them to master where it is stored in an array
+    // MPI_Gather(&gather_send, 1, MPI_INT, gather_recv_root, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank == 0)
     {
-        if (b[i] == 11)
+        // Print out the array recived from mpi gather
+        for (int i = 0; i < nproc; ++i)
         {
-            dummy = 123;
-            for (j = 0; j < size; ++j)
-            {
-                MPI_Send(&dummy, 1, MPI_INT, j, 86, MPI_COMM_WORLD);
-            }
-            printf("P:%d found it at global index %d\n", rank, i);
-            myfound = 1;
+            printf("%d, ", gather_recv_root[i]);
         }
-        MPI_Test(&request, &done, &status);
-        ++i;
-        inrange = (i <= ((rank + 1) * nvalues - 1) && i >= rank * nvalues);
+        // print out reduce gather val
     }
-    if (!myfound)
-    {
-        printf("P:%d stopped at global index %d\n", rank, i - 1);
-    }
+
     MPI_Finalize();
+    return 0;
 }
