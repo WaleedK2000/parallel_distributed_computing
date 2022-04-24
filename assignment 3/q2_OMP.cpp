@@ -5,41 +5,8 @@
 using namespace std;
 
 #define NUM_THREADS 12
-#define array_size 909999
-#define to_search 25874
-
-int countOccuranceofString(string str, string subStr)
-{
-
-    int count = 0;
-    int len = subStr.length();
-    int i = 0;
-
-    for (i = 0; i < str.length(); ++i)
-    {
-        if (str.substr(i, len) == subStr)
-            count++;
-    }
-
-    return count;
-}
-
-int countOccuranceofStringParallel(string str, string subStr)
-{
-
-    int count = 0;
-    int len = subStr.length();
-    int i = 0;
-#pragma omp parallel for reduction(+ \
-                                   : count)
-    for (i = 0; i < str.length(); ++i)
-    {
-        if (str.substr(i, len) == subStr)
-            count++;
-    }
-
-    return count;
-}
+#define array_size 909999999
+#define to_search 258749358
 
 int main()
 {
@@ -50,9 +17,9 @@ int main()
     // int to_search = 250;
     omp_set_num_threads(NUM_THREADS);
 
-    int arr[array_size];
+    long long *arr = new long long[array_size];
     //#pragma omp parallel for
-    for (int i = 0; i < array_size; i++)
+    for (long long i = 0; i < array_size; i++)
         arr[i] = i;
 
 #pragma omp parallel shared(found, complete, stopSignal)
@@ -72,11 +39,11 @@ int main()
         }
         else
         {
-            int each = array_size / (num_threads - 1);
-            int start = each * (thread_num - 1);
-            int end = start + each;
+            long long each = array_size / (num_threads - 1);
+            long long start = each * (thread_num - 1);
+            long long end = start + each;
 
-            for (int i = start; i < end && !stopSignal; i++)
+            for (long long i = start; i < end && !stopSignal; i++)
             {
 
                 if (arr[i] == to_search)
@@ -87,7 +54,7 @@ int main()
                 }
             }
 
-            if (!stopSignal)
+            if (stopSignal)
             {
                 cout << thread_num << " Recived Stop Signal" << endl;
             }
