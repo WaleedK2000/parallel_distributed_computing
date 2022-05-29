@@ -5,8 +5,8 @@
 using namespace std;
 
 #define NUM_THREADS 12
-#define array_size 909999999
-#define to_search 258749358
+#define array_size 9099999
+#define to_search 2587493
 
 int main()
 {
@@ -50,6 +50,8 @@ int main()
                 {
                     found = true;
                     cout << "Found! by : " << thread_num << endl;
+                    cout << "Found Val: " << arr[i] << endl;
+
                     break;
                 }
             }
