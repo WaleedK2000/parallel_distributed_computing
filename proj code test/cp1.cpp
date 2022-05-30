@@ -52,14 +52,14 @@ int main()
 
     // int ***matrix = new int **[4];
 
-    int size[] = {25, 45, 65, 2, 30};
+    int size[] = {2, 2, 4, 2, 5};
 
     int ***matrix = new int **[4];
 
-    matrix[0] = generateMatrix(25, 45);
-    matrix[1] = generateMatrix(45, 65);
-    matrix[2] = generateMatrix(65, 2);
-    matrix[3] = generateMatrix(2, 30);
+    matrix[0] = generateMatrix(2, 2);
+    matrix[1] = generateMatrix(2, 4);
+    matrix[2] = generateMatrix(4, 2);
+    matrix[3] = generateMatrix(2, 5);
 
     cout << "----- matrix 1 -----" << endl;
     printMatrix(matrix[0], 2, 2);
