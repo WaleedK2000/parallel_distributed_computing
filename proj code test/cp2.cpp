@@ -7,6 +7,8 @@ using namespace std;
 
 // int **getMatrix(int row, int col);
 
+int **MatrixChainMultiplication111(int p[], int n);
+
 int matrixChainMultiplication(int *dims, const int n);
 
 int **getK(int *dims, const int n);
@@ -50,7 +52,8 @@ int **MatrixChainOr0decr(int p[], const int n)
     return m;
 }
 
-int **MatrixChainOrder1(int size[], const int n)
+int **MatrixChainOrder1(int size[], const int n);
+/*
 {
 
     int **m = new int *[n];
@@ -119,7 +122,7 @@ int **MatrixChainOrder1(int size[], const int n)
 
     return m;
 }
-
+*/
 void printMatrix(int **matrix, int row, int col)
 {
     for (int i = 0; i < row; i++)
@@ -134,7 +137,7 @@ void printMatrix(int **matrix, int row, int col)
 
 int main()
 {
-    int size[] = {2, 2, 4, 2, 5};
+    int size[] = {3, 2, 4, 2, 5};
     int matrixCount = 4;
 
     int **k_mat = MatrixChainOrder1(size, 4);
@@ -145,149 +148,131 @@ int main()
     // Matrix chain multiplication
 }
 
-int matrixChainMultip00lication(int *dims, const int n)
+int **MatrixChainOrder1(int size[], const int n)
 {
 
-    // c[i, j] = Minimum number of scalar multiplications (i.e., cost)
-    // needed to compute matrix `M[i] M[i+1] … M[j] = M[i…j]`
-    // The cost is zero when multiplying one matrix
-    // int c[n + 1][n + 1];
-
-    int **c = new int *[n + 1];
-    for (int i = 0; i < n + 1; ++i)
-    {
-        c[i] = new int[n + 1];
-    }
-
-    for (int i = 1; i <= n; i++)
-    {
-        c[i][i] = 0;
-    }
-
-    for (int len = 2; len <= n; len++) // subsequence lengths
-    {
-        for (int i = 1; i <= n - len + 1; i++)
-        {
-            int j = i + len - 1;
-            c[i][j] = INT_MAX;
-
-            for (int k = i; j < n && k <= j - 1; k++)
-            {
-                int cost = c[i][k] + c[k + 1][j] + dims[i - 1] * dims[k] * dims[j];
-                if (cost < c[i][j])
-                {
-                    c[i][j] = cost;
-                }
-            }
-        }
-    }
-
-    printMatrix(c, n + 1, n + 1);
-
-    return c[1][n - 1];
-}
-
-int matrixChainMultiplication(int *dims, const int n)
-{
-
-    // c[i, j] = Minimum number of scalar multiplications (i.e., cost)
-    // needed to compute matrix `M[i] M[i+1] … M[j] = M[i…j]`
-    // The cost is zero when multiplying one matrix
-    // int c[n + 1][n + 1];
-
-    int **c = new int *[n + 1];
-    for (int i = 0; i < n + 1; ++i)
-    {
-        c[i] = new int[n + 1];
-    }
-
-    for (int i = 1; i <= n; i++)
-    {
-        c[i][i] = 0;
-    }
-
-    for (int len = 2; len <= n; len++) // subsequence lengths
-    {
-        for (int i = 1; i <= n - len + 1; i++)
-        {
-            int j = i + len - 1;
-            c[i][j] = INT_MAX;
-
-            for (int k = i; j < n && k <= j - 1; k++)
-            {
-                int cost = c[i][k] + c[k + 1][j] + dims[i - 1] * dims[k] * dims[j];
-                if (cost < c[i][j])
-                {
-                    c[i][j] = cost;
-                }
-            }
-        }
-    }
-
-    printMatrix(c, n + 1, n + 1);
-
-    return c[1][n - 1];
-}
-
-int **getK(int *dims, const int n)
-{
-
-    int **costMatrix = new int *[n];
-    int **kMatrix = new int *[n];
-
+    int **m = new int *[n];
+    int **k_mat = new int *[n];
     for (int i = 0; i < n; ++i)
     {
-
-        costMatrix[i] = new int[n];
-        kMatrix[i] = new int[n];
+        m[i] = new int[n];
+        k_mat[i] = new int[n];
     }
 
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j < n; ++j)
         {
-
-            if (i == j)
-            {
-                costMatrix[j][i] = 0;
-            }
-
-            costMatrix[i][j] = INT_MAX;
+            m[i][j] = INT_MAX;
+            k_mat[i][j] = -1;
         }
     }
 
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; i++)
     {
-        for (int j = 0; j < n; ++j)
-        {
-            kMatrix[i][j] = -1;
-        }
+        m[i][i] = 0;
     }
-    // for (int j = 0; j < i; ++j)
-    for (int i = 1; i < n; ++i)
+
+    // cost is zero when multiplying
+    // one matrix.
+    for (int i = 0; i < n; i++)
+        m[i][i] = 0;
+
+    cout << " -- " << m[1][1] << endl;
+
+    // L is chain length.
+    for (int iter = -1; iter < n; ++iter)
     {
+        cout << "a" << endl;
 
-        for (int j = 0; j < i; ++j)
-        // for (int i = 1; i < n; ++i)
+        for (int l = 0; l < n - iter - 1; ++l)
         {
-            for (int k = 0; k < (i - j); ++k)
-            {
+            cout << "b" << endl;
 
-                cout << "i: " << i << " j: " << j << " k: " << k << endl;
+            if (l != iter + l + 1)
+                //   m[l][iter + l + 1] = INT_MAX;
 
-                cout << "[" << j << ',' << k << "] $$$  [" << k + 1 << ',' << i << "]" << endl;
-
-                int current = costMatrix[j][k] + costMatrix[k + 1][i] + dims[j] * dims[k] * dims[i];
-                if (current < costMatrix[j][i])
+                for (int k = 0; k <= iter; ++k)
                 {
-                    costMatrix[j][i] = current;
-                    kMatrix[j][i] = k;
+                    int lc = l + k;
+                    int rr = l + k + 1;
+                    int rc = iter + l + 1;
+
+                    if (rr == 1 && rc == 1)
+                    {
+                        cout << "ightogjtgotjg  ------------------------------------------- " << m[rr][rc] << endl;
+                        ;
+                    }
+
+                    cout
+                        << "iter: " << iter << " l: " << l << " k: " << k << endl;
+
+                    cout << "[ " << l << "," << iter + l + 1 << " ] = ";
+
+                    cout << "[" << l << "," << lc << "]  +  "
+                         << "[" << rr << " - " << rc << "]" << m[l + k][iter + l + 1]
+                         << " + " << l << " * " << l + k + 1 << " * " << rr + 1 << endl;
+
+                    int curr = m[l][lc] + m[rr][rc] + size[l] * size[rr] * size[rr + 1];
+
+                    cout << " .. " << m[l][lc] << " + " << m[rr][rc] << " + " << size[l] << " * " << size[rr] << " * " << size[rr + 1] << endl;
+
+                    cout << "curr " << curr << endl;
+
+                    if (curr < m[l][rc])
+                    {
+                        cout << "curr " << curr << endl;
+
+                        m[l][iter + l + 1] = curr;
+                        k_mat[l][iter + l + 1] = k;
+                    }
+
+                    cout << "c" << endl;
+                }
+
+            printMatrix(m, n, n);
+        }
+    }
+
+    cout << "here" << endl;
+
+    return k_mat;
+}
+
+int **MatrixChainMultiplication111(int p[], int n)
+{
+    // int m[n][n];
+
+    int **m = new int *[n];
+
+    for (int i = 0; i < n; i++)
+    {
+        m[i] = new int[n];
+    }
+
+    int i, j, k, L, q;
+
+    for (i = 1; i < n; i++)
+        m[i][i] = 0; // number of multiplications are 0(zero) when there is only one matrix
+
+    // Here L is chain length. It varies from length 2 to length n.
+    for (L = 2; L < n; L++)
+    {
+        for (i = 1; i < n - L + 1; i++)
+        {
+            j = i + L - 1;
+            m[i][j] = INT_MAX; // assigning to maximum value
+
+            for (k = i; k <= j - 1; k++)
+            {
+                q = m[i][k] + m[k + 1][j] + p[i - 1] * p[k] * p[j];
+                if (q < m[i][j])
+                {
+                    m[i][j] = q; // if number of multiplications found less that number will be updated.
                 }
             }
         }
     }
 
-    printMatrix(costMatrix, n, n);
-
-    return kMatrix;
+    return m; // returning the final answer which is M[1][n]
 }
