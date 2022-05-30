@@ -170,17 +170,11 @@ int **MatrixChainOrder1(int size[], const int n)
 
     for (int i = 0; i < n; i++)
     {
+
         m[i][i] = 0;
+        k_mat[i][i] = 0;
     }
 
-    // cost is zero when multiplying
-    // one matrix.
-    for (int i = 0; i < n; i++)
-        m[i][i] = 0;
-
-    cout << " -- " << m[1][1] << endl;
-
-    // L is chain length.
     for (int iter = -1; iter < n; ++iter)
     {
         cout << "a" << endl;
@@ -198,43 +192,19 @@ int **MatrixChainOrder1(int size[], const int n)
                     int rr = l + k + 1;
                     int rc = iter + l + 1;
 
-                    if (rr == 1 && rc == 1)
-                    {
-                        cout << "ightogjtgotjg  ------------------------------------------- " << m[rr][rc] << endl;
-                        ;
-                    }
-
-                    cout
-                        << "iter: " << iter << " l: " << l << " k: " << k << endl;
-
-                    cout << "[ " << l << "," << iter + l + 1 << " ] = ";
-
-                    cout << "[" << l << "," << lc << "]  +  "
-                         << "[" << rr << " - " << rc << "]" << m[l + k][iter + l + 1]
-                         << " + " << l << " * " << l + k + 1 << " * " << rr + 1 << endl;
-
                     int curr = m[l][lc] + m[rr][rc] + size[l] * size[rr] * size[rr + 1];
-
-                    cout << " .. " << m[l][lc] << " + " << m[rr][rc] << " + " << size[l] << " * " << size[rr] << " * " << size[rr + 1] << endl;
-
-                    cout << "curr " << curr << endl;
 
                     if (curr < m[l][rc])
                     {
-                        cout << "curr " << curr << endl;
 
                         m[l][iter + l + 1] = curr;
                         k_mat[l][iter + l + 1] = k;
                     }
-
-                    cout << "c" << endl;
                 }
 
             printMatrix(m, n, n);
         }
     }
-
-    cout << "here" << endl;
 
     return k_mat;
 }
