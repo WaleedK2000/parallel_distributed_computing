@@ -1,9 +1,11 @@
 #include <iostream>
-
+#include <climits>
 using namespace std;
 
 int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSizes, int numMatrix, int row, int col);
 int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2, int col2);
+
+int **getK(int size[], const int n);
 // Generates random matrix of various sizes
 int ***generateRandomMatrix(int numMatrix);
 
@@ -54,6 +56,8 @@ int main()
 
     int size[] = {2, 2, 4, 2, 5};
 
+    int **k = getK(size, 4);
+
     int ***matrix = new int **[4];
 
     matrix[0] = generateMatrix(2, 2);
@@ -90,28 +94,98 @@ int main()
 
     costMatrix[2][3] = 2;
 
-    printMatrix(costMatrix, 4, 4);
+    printMatrix(k, 4, 4);
 
-    int **ans = matrixChainMultiplication(matrix, costMatrix, size, 4, -1, -1);
+    k[0][3] = 2;
+
+    cout
+        << "Hello World! " << costMatrix[1][0] << endl;
+
+    printMatrix(k, 4, 4);
+
+    int **ans = matrixChainMultiplication(matrix, k, size, 4, -1, -1);
 
     cout
         << "Hello World!" << endl;
 
     cout << "Final Result" << endl;
-    printMatrix(ans, 2, 5);
+    // printMatrix(ans, 2, 5);
 
     return 0;
 }
 
+int **getK(int size[], const int n)
+{
+
+    int **m = new int *[n];
+    int **k_mat = new int *[n];
+    for (int i = 0; i < n; ++i)
+    {
+        m[i] = new int[n];
+        k_mat[i] = new int[n];
+    }
+
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            m[i][j] = INT_MAX;
+            k_mat[i][j] = -1;
+        }
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+
+        m[i][i] = 0;
+        k_mat[i][i] = 0;
+    }
+
+    for (int iter = 0; iter < n; ++iter)
+    {
+        cout << "a" << endl;
+
+        for (int l = 0; l < n - iter - 1; ++l)
+        {
+            cout << "b" << endl;
+
+            if (l != iter + l + 1)
+                //   m[l][iter + l + 1] = INT_MAX;
+
+                for (int k = 0; k <= iter; ++k)
+                {
+                    int lc = l + k;
+                    int rr = l + k + 1;
+                    int rc = iter + l + 1;
+
+                    int curr = m[l][lc] + m[rr][rc] + size[l] * size[rr] * size[rr + 1];
+
+                    if (curr < m[l][rc])
+                    {
+
+                        m[l][iter + l + 1] = curr;
+                        k_mat[l][iter + l + 1] = k;
+                    }
+                }
+
+            printMatrix(m, n, n);
+        }
+    }
+
+    return k_mat;
+}
+
 int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSizes, int numMatrix, int row, int col)
 {
-    cout << "In here" << endl;
-    cout << "Row: " << row << endl;
+    // cout << "In here" << endl;
+    // cout << "Row: " << row << endl;
 
     if (row == -1 && col == -1)
     {
 
         int k = costMatrix[0][numMatrix - 1];
+        cout << "*************************************** " << k << ", " << numMatrix << endl;
+
         int **m1 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, 0, k);
         int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + 1, numMatrix - 1);
 
@@ -129,8 +203,24 @@ int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSize
         return matrix[row];
 
     int k = costMatrix[row][col];
-    int **m1 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, row, k);
-    int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + 1, col);
+
+    cout << "row: " << row << ", col: " << col << ", k: " << k << endl;
+    cout << "k: " << k << endl;
+
+    while (k == -1)
+    {
+        cout << "row: " << row << endl;
+        cout << "col: " << col << endl;
+    }
+
+    cout << "row: " << row << endl;
+    cout << "col: " << col << endl;
+
+    cout << costMatrix[row][col] << endl;
+    ;
+
+    int **m1 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, row, k + row);
+    int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + row + 1, col);
 
     cout << "row: " << row << " col: " << col << endl;
     cout << "k: " << k << endl;

@@ -137,7 +137,7 @@ void printMatrix(int **matrix, int row, int col)
 
 int main()
 {
-    int size[] = {3, 2, 4, 2, 5};
+    int size[] = {2, 2, 4, 2, 5};
     int matrixCount = 4;
 
     int **k_mat = MatrixChainOrder1(size, 4);
@@ -175,7 +175,7 @@ int **MatrixChainOrder1(int size[], const int n)
         k_mat[i][i] = 0;
     }
 
-    for (int iter = -1; iter < n; ++iter)
+    for (int iter = 0; iter < n; ++iter)
     {
         cout << "a" << endl;
 
