@@ -1,5 +1,6 @@
 #include <iostream>
 #include <climits>
+#include <mpi.h>
 using namespace std;
 
 int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSizes, int numMatrix, int row, int col);
@@ -54,6 +55,15 @@ int main()
 
     // int ***matrix = new int **[4];
 
+    int numtasks,              /* number of tasks in partition */
+        taskid,                /* a task identifier */
+        numworkers,            /* number of worker tasks */
+        source,                /* task id of message source */
+        dest,                  /* task id of message destination */
+        mtype,                 /* message type */
+        rows,                  /* rows of matrix A sent to each worker */
+        averow, extra, offset; /* used to determine rows sent to each worker */
+
     int size[] = {2, 2, 4, 2, 5};
 
     int **k = getK(size, 4);
@@ -103,7 +113,13 @@ int main()
 
     printMatrix(k, 4, 4);
 
-        cout
+    if (taskid == MASTER)
+    {
+
+        int **ans = matrixChainMultiplication(matrix, k, size, 4, -1, -1);
+    }
+
+    cout
         << "Hello World!" << endl;
 
     cout << "Final Result" << endl;
