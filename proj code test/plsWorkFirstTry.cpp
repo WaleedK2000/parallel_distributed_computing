@@ -144,20 +144,60 @@ int main()
         while (numMatrix > 0)
         {
 
-            double matrix_a[N][N], matrix_b[N][N], matrix_c[N][N];
-
+            // for (int i = 1; i <= slaveTaskCount; ++i)
+            //{
             int rowA, colA;
             int rowB, colB;
+            int *matrixA;
+            int *matrixB;
+
+            source = 0;
 
             MPI_Recv(&rowA, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
-            MPI_Recv(&colA, 1, MPI_INT, source, 2, MPI_COMM_WORLD, &status);
+            MPI_Recv(&colA, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
 
-            MPI_Recv(&rowB, 1, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
-            MPI_Recv(&colB, 1, MPI_INT, source, 4, MPI_COMM_WORLD, &status);
+            MPI_Recv(&rowB, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&colB, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
 
             MPI_Recv(&offset, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(&rows, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
-            MPI_Recv(&matrix_a, rows * colA, MPI_DOUBLE, source, 1, MPI_COMM_WORLD, &status);
+
+            MPI_Recv(matrixA, rows * colA, MPI_DOUBLE, source, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(matrixB, rowB * colB, MPI_DOUBLE, source, 1, MPI_COMM_WORLD, &status);
+
+            int **mat_a = convert1Dto2D(matrixA, rows, colA);
+            int **mat_b = convert1Dto2D(matrixB, rowB, colB);
+
+            // matrix multiplication of mat_a and mat_b
+
+            int **mat_c = new int *[rows];
+            for (int i = 0; i < rows; i++)
+            {
+                mat_c[i] = new int[colB];
+            }
+
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < colB; j++)
+                {
+                    mat_c[i][j] = 0;
+
+                    for (int k = 0; k < colA; k++)
+                    {
+                        mat_c[i][j] += mat_a[i][k] * mat_b[k][j];
+                    }
+                }
+            }
+
+            int *arr_c = convert2Dto1D(mat_c, rows, colB);
+
+            MPI_Send(&offset, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+            MPI_Send(&rows, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+            MPI_Send(arr_c, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+
+            //}
+
+            // double matrix_a[N][N], matrix_b[N][N], matrix_c[N][N];
         }
     }
 
@@ -299,20 +339,48 @@ int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2,
             throw "Error: Matrix 1 and Matrix 2 cannot be multiplied. Dimensions Error";
         }
 
-        MPI_Send(&row1, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
-        MPI_Send(&col1, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
-
-        MPI_Send(&row2, 1, MPI_INT, 0, 3, MPI_COMM_WORLD);
-        MPI_Send(&col2, 1, MPI_INT, 0, 4, MPI_COMM_WORLD);
-
         int rows = row1 / slaveTaskCount;
         int offset = 0;
 
-        MPI_Send(&matrix1[offset][0], row1 * col1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+        int *matArr1 = convert2Dto1D(matrix1, row1, col1);
+        int *matArr2 = convert2Dto1D(matrix2, row2, col2);
 
-        int *matArr2 = 2convert2Dto1D(matrix2, row2, col2);
+        for (int dest = 1; dest <= slaveTaskCount; ++dest)
+        {
+            MPI_Send(&row1, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
+            MPI_Send(&col1, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
 
-        MPI_Send(matArr2, row2 * col2, MPI_INT, 0, 2, MPI_COMM_WORLD);
+            MPI_Send(&row2, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
+            MPI_Send(&col2, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
+
+            MPI_Send(&offset, 1, MPI_INT, dest, 1, MPI_COMM_WORLD);
+
+            MPI_Send(matArr1[offset], rows * col1, MPI_INT, dest, 1, MPI_COMM_WORLD);
+            MPI_Send(matArr2, row2 * col2, MPI_INT, dest, 1, MPI_COMM_WORLD);
+
+            offset = offset + rows * col1;
+        }
+
+        int *resultArr = new int[row1 * col2];
+
+        for (int dest = 1; dest <= slaveTaskCount; ++dest)
+        {
+            int offset, rows;
+            int *arr_min;
+
+            MPI_Recv(&offset, 1, MPI_INT, dest, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&rows, 1, MPI_INT, dest, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            MPI_Recv(&resultArr[offset], rows * col2, MPI_INT, dest, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // MPI_Recv(resultArr, row1 * col2, MPI_INT, dest, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+
+        int **result2D = convert1Dto2D(resultArr, row1, col2);
+
+        return result2D;
+
+        /*
 
         cout << "Multiplying Matrix" << endl;
         printMatrix(matrix1, row1, col1);
@@ -336,7 +404,7 @@ int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2,
         }
 
         cout << " ------------------ Result " << endl;
-        printMatrix(result, row1, col2);
+        printMatrix(result, row1, col2); */
     }
     catch (const std::exception &e)
     {
