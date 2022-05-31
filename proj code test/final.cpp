@@ -4,17 +4,57 @@
 using namespace std;
 
 int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSizes, int numMatrix, int row, int col, int slaveTaskCount);
-//int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2, int col2);
-// Convert 2d matrix to 1 d matrix
+
+/*
+ *    This function convers 2D array to 1D array
+ * @param matrix 2d matrix
+ * @param row row size of matrix
+ * @param col column size of matrix
+ * @return 1d matrix
+ */
+
 int *convert2Dto1D(int **matrix, int row, int col);
+
+/*
+ *    This function convers 1D array to 2D array
+ * @param matrix 2d matrix
+ * @param row row size of matrix
+ * @param col column size of matrix
+ * @return 1d matrix
+ */
+
 int **convert1Dto2D(int *matrix, int row, int col);
+/*
+ *   This function generates random array of r rows and c columns
+ * @param r row size of matrix
+ * @param c column size of matrix
+ * @return 2d matrix
+ */
+
 int **generate2DMatrix(int r, int c);
 
+/*
+ * This function Multiplies two matrices. Uses MPI_Send()
+ * @param matrix1 first matrix
+ * @param matrix2 second matrix
+ * @param row1 row size of matrix1
+ * @param col1 column size of matrix1
+ * @param row2 row size of matrix2
+ * @param col2 column size of matrix2
+ * @param slaveTaskCount number of slaves
+ * @return int** matrix result
+ */
 int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2, int col2, int slaveTaskCount);
 
+// This function calculates K which is used to determine best order of multiplication
+// @param size array of sizes of matrices
+// @param n number of matrix
+// @return int** K
 int **getK(int size[], const int n);
 // Generates random matrix of various sizes
 int ***generateRandomMatrix(int numMatrix);
+
+// Generate Assortment of matrixes of various sizes used in initialization in this code
 
 int ***initialiseMatrix(int num, int size[])
 {
@@ -24,24 +64,21 @@ int ***initialiseMatrix(int num, int size[])
         matrix[i] = new int *[size[i]];
         for (int j = 0; j < size[i]; j++)
         {
-            matrix[i][j] = new int[size[i]];
+            matrix[i][j] = new int[size[i + 1]];
         }
     }
     return matrix;
 }
 
-void copyMatrix(int **matrixOrginal, int **matrixCopy, int row, int col)
-{
-    for (int i = 0; i < row; i++)
-    {
-        for (int j = 0; j < col; j++)
-        {
-            matrixCopy[i][j] = matrixOrginal[i][j];
-        }
-    }
-}
-
+// Generates Matrix of row and col
+/*
+ * @param row row size of matrix
+ * @param col column size of matrix
+ * @return 2d matrix
+ */
 int **generateMatrix(int row, int col);
+
+// Prints matrix of row and col
 
 void printMatrix(int **matrix, int row, int col)
 {
@@ -55,7 +92,7 @@ void printMatrix(int **matrix, int row, int col)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     // random 3d matrix
 
@@ -73,14 +110,14 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-    
+
     numworkers = numtasks - 1;
 
     int numMatrix = 4;
 
     int size[] = {2, 2, 4, 2, 5};
 
-    int ***matrix = new int **[4];
+    int ***matrix = initialiseMatrix(numMatrix, size);
 
     matrix[0] = generateMatrix(2, 2);
     matrix[1] = generateMatrix(2, 4);
@@ -89,10 +126,9 @@ int main(int argc, char** argv)
 
     int MASTER = 0;
 
-    
-
     if (taskid == MASTER)
     {
+        // inside master
         int numMatrix = 4;
         int **k = getK(size, numMatrix);
         MPI_Send(&numMatrix, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
@@ -100,42 +136,37 @@ int main(int argc, char** argv)
     }
     else
     {
+        // inside slaves
         int numMatrix;
         MPI_Status status;
         MPI_Recv(&numMatrix, 1, MPI_INT, MASTER, 0, MPI_COMM_WORLD, &status);
 
         int rowA, colA;
-            int rowB, colB;
-            int *matrixA;
-            int *matrixB;
-            //int status;
-            source = 0;
+        int rowB, colB;
+        int *matrixA;
+        int *matrixB;
+        // int status;
+        source = 0;
 
         // int **ans = matrixChainMultiplication(matrix, k, size, numMatrix, -1, -1);
-
-        while (numMatrix > 0)
+        // Recives Matrix num then each slave runs below loop once for each matrix count
+        while (numMatrix - 1 > 0)
         {
             numMatrix--;
             // for (int i = 1; i <= slaveTaskCount; ++i)
             //{
-                
-            cout << "hehehehehehehehhehehehehehehe  3558" << " nm " << numMatrix << endl;
 
             MPI_Recv(&rowA, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(&colA, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
 
             MPI_Recv(&rowB, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(&colB, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
-             
-            cout << "hehehehehehehehhehehehehehehe  355" << " nm " << numMatrix << endl;
 
             MPI_Recv(&offset, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(&rows, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
 
-
-
-            matrixA = new int[rows*colA];
-            matrixB = new int[rowB*colB];
+            matrixA = new int[rows * colA];
+            matrixB = new int[rowB * colB];
 
             MPI_Recv(matrixA, rows * colA, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
             MPI_Recv(matrixB, rowB * colB, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
@@ -169,7 +200,6 @@ int main(int argc, char** argv)
             MPI_Send(&offset, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
             MPI_Send(&rows, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
             MPI_Send(arr_c, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
-
         }
     }
 
@@ -254,8 +284,8 @@ int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSize
         int k = costMatrix[0][numMatrix - 1];
         cout << "*************************************** " << k << ", " << numMatrix << endl;
 
-        int **m1 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, 0, k,slaveTaskCount);
-        int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + 1, numMatrix - 1,slaveTaskCount);
+        int **m1 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, 0, k, slaveTaskCount);
+        int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + 1, numMatrix - 1, slaveTaskCount);
 
         int row1 = matrixSizes[0];
         int col1 = matrixSizes[k];
@@ -288,7 +318,7 @@ int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSize
     ;
 
     int **m1 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, row, k + row, slaveTaskCount);
-    int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + row + 1, col,slaveTaskCount);
+    int **m2 = matrixChainMultiplication(matrix, costMatrix, matrixSizes, numMatrix, k + row + 1, col, slaveTaskCount);
 
     cout << "row: " << row << " col: " << col << endl;
     cout << "k: " << k << endl;
@@ -336,7 +366,7 @@ int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2,
             MPI_Send(matArr2, row2 * col2, MPI_INT, dest, 1, MPI_COMM_WORLD);
 
             cout << "hehehehehehehehhehehehehehehe  8558" << endl;
-            
+
             offset = offset + rows * col1;
         }
 
@@ -437,7 +467,6 @@ int **generateMatrix(int row, int col)
     }
 
     return matrix;
-
 }
 
 int **generate2DMatrix(int r, int c)

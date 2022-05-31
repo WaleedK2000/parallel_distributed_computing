@@ -143,7 +143,7 @@ int main()
 
         while (numMatrix > 0)
         {
-
+            numMatrix--;
             // for (int i = 1; i <= slaveTaskCount; ++i)
             //{
             int rowA, colA;
