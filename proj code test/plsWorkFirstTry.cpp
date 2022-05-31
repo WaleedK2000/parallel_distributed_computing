@@ -5,6 +5,10 @@ using namespace std;
 
 int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSizes, int numMatrix, int row, int col);
 int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2, int col2);
+// Convert 2d matrix to 1 d matrix
+int *convert2Dto1D(int **matrix, int row, int col);
+int **convert1Dto2D(int *matrix, int row, int col);
+int **generate2DMatrix(int r, int c);
 
 int **getK(int size[], const int n);
 // Generates random matrix of various sizes
@@ -64,9 +68,20 @@ int main()
         rows,                  /* rows of matrix A sent to each worker */
         averow, extra, offset; /* used to determine rows sent to each worker */
 
-    int size[] = {2, 2, 4, 2, 5};
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
+    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+    if (numtasks < 2)
+    {
+        printf("Need at least two MPI tasks. Quitting...\n");
+        MPI_Abort(MPI_COMM_WORLD, rc);
+        exit(1);
+    }
+    numworkers = numtasks - 1;
 
-    int **k = getK(size, 4);
+    int numMatrix = 4;
+
+    int size[] = {2, 2, 4, 2, 5};
 
     int ***matrix = new int **[4];
 
@@ -115,8 +130,35 @@ int main()
 
     if (taskid == MASTER)
     {
-
+        int numMatrix = 4;
+        int **k = getK(size, numMatrix);
+        MPI_Send(&numMatrix, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
         int **ans = matrixChainMultiplication(matrix, k, size, 4, -1, -1);
+    }
+    else
+    {
+        int numMatrix;
+        MPI_Recv(&numMatrix, 1, MPI_INT, MASTER, 0, MPI_COMM_WORLD, &status);
+        // int **ans = matrixChainMultiplication(matrix, k, size, numMatrix, -1, -1);
+
+        while (numMatrix > 0)
+        {
+
+            double matrix_a[N][N], matrix_b[N][N], matrix_c[N][N];
+
+            int rowA, colA;
+            int rowB, colB;
+
+            MPI_Recv(&rowA, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&colA, 1, MPI_INT, source, 2, MPI_COMM_WORLD, &status);
+
+            MPI_Recv(&rowB, 1, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
+            MPI_Recv(&colB, 1, MPI_INT, source, 4, MPI_COMM_WORLD, &status);
+
+            MPI_Recv(&offset, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&rows, 1, MPI_INT, source, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&matrix_a, rows * colA, MPI_DOUBLE, source, 1, MPI_COMM_WORLD, &status);
+        }
     }
 
     cout
@@ -244,7 +286,7 @@ int **matrixChainMultiplication(int ***matrix, int **costMatrix, int *matrixSize
     return (multiplyMatrix(m1, m2, matrixSizes[row], matrixSizes[k + 1], matrixSizes[k + 1], matrixSizes[col + 1]));
 }
 
-int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2, int col2)
+int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2, int col2, int slaveTaskCount)
 {
     int **result = new int *[row1];
     try
@@ -256,6 +298,21 @@ int **multiplyMatrix(int **matrix1, int **matrix2, int row1, int col1, int row2,
             cout << "Error: Matrix 1 and Matrix 2 cannot be multiplied" << endl;
             throw "Error: Matrix 1 and Matrix 2 cannot be multiplied. Dimensions Error";
         }
+
+        MPI_Send(&row1, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+        MPI_Send(&col1, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+
+        MPI_Send(&row2, 1, MPI_INT, 0, 3, MPI_COMM_WORLD);
+        MPI_Send(&col2, 1, MPI_INT, 0, 4, MPI_COMM_WORLD);
+
+        int rows = row1 / slaveTaskCount;
+        int offset = 0;
+
+        MPI_Send(&matrix1[offset][0], row1 * col1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+
+        int *matArr2 = 2convert2Dto1D(matrix2, row2, col2);
+
+        MPI_Send(matArr2, row2 * col2, MPI_INT, 0, 2, MPI_COMM_WORLD);
 
         cout << "Multiplying Matrix" << endl;
         printMatrix(matrix1, row1, col1);
@@ -333,4 +390,55 @@ int **generateMatrix(int row, int col)
     }
 
     return matrix;
+}
+
+int **generate2DMatrix(int r, int c)
+{
+    int **matrix = new int *[r];
+    for (int i = 0; i < r; i++)
+    {
+        matrix[i] = new int[c];
+    }
+
+    for (int i = 0; i < r; i++)
+    {
+        for (int j = 0; j < c; j++)
+        {
+            matrix[i][j] = rand() % 10;
+        }
+    }
+
+    return matrix;
+}
+
+// Convert 2d matrix to 1 d matrix
+int *convert2Dto1D(int **matrix, int row, int col)
+{
+    int *result = new int[row * col];
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            result[i * col + j] = matrix[i][j];
+        }
+    }
+    return result;
+}
+
+int **convert1Dto2D(int *matrix, int row, int col)
+{
+    int **result = new int *[row];
+    for (int i = 0; i < row; i++)
+    {
+        result[i] = new int[col];
+    }
+
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            result[i][j] = matrix[i * col + j];
+        }
+    }
+    return result;
 }
